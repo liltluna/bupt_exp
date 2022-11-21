@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="hadoop" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="InvertedIndex" />
+    <module name="InvertedIndex" />
+    <option name="PROGRAM_PARAMETERS" value="input/ output/" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

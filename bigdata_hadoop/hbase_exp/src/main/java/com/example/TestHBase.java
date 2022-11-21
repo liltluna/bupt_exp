@@ -13,25 +13,34 @@ public class TestHBase {
     public static Admin admin;
 
     public static void main(String[] args) throws IOException {
-        String tableNameString = "Students-Course-SC";
-        String[] colFamilyStrings = {"Student", "SC", "Course"};
-        System.out.println("going in ");
-        // String[] studentColStrings = {"S_Name", "S_Sex", "S_Age"};
-        // String[] courseColStrings = {"C_No", "C_Name", "C_Credit"};
-        // String[] scColStrings = {"SC_Cno", "SC_Score"};
+        String tableNameString = "StuInfo";
+        String[] colFamilyStrings = {"SI", "Ma", "CS", "Eng"};
+    
+        String[] infoFields = {"SI:name", "SI:sex", "SI:age", "Ma:id", "Ma:credit", "Ma:score", "CS:id", "CS:credit", "CS:score", "Eng:id", "Eng:credit", "Eng:score"};
 
-        createTale(tableNameString, colFamilyStrings);
-        addRecord(tableNameString, "row1", colFamilyStrings, colFamilyStrings);
-        scanColumn(tableNameString, "Student:Student");
-        scanTest();
+        String[] info_1 = {"Zhangsan", "male", "23", "123001", "2", "86", "123002", "5", "", "123003", "3", "69"};
+        String[] info_2 = {"Mary", "female", "22", "123001", "2", "", "123002", "5", "77", "123003", "3", "99"};
+        String[] info_3 = {"Lisi", "male", "24", "123001", "2", "98", "123002", "5", "95", "123003", "3", ""};
 
+        createTable(tableNameString, colFamilyStrings);
+        addRecord(tableNameString, "2015001", infoFields, info_1);
+        addRecord(tableNameString, "2015002", infoFields, info_2);
+        addRecord(tableNameString, "2015003", infoFields, info_3);
+        
+        scanColumn(tableNameString, "Student");
+        scanColumn(tableNameString, "Ma:score");
+
+        modifyData(tableNameString, "2015002", "Eng:score", "100");
+        scanColumn(tableNameString, "Eng:score");
+
+        deleteRow(tableNameString, "2015003");
+        scanColumn(tableNameString, "SI");
     }
 
     // establish connection
     public static void init() {
         configuration = HBaseConfiguration.create();
-        configuration.set("hbase.zookeeper.quorum","*.*.*.*");
-        configuration.set("hbase.zookeeper.property.clientPort","2181");
+        configuration.set("hbase.rootdir","hdfs://localhost:9000/hbase");
         try {
             connection = ConnectionFactory.createConnection(configuration);
             admin = connection.getAdmin();
@@ -55,8 +64,19 @@ public class TestHBase {
     }
 
     // create a table,
-    // if it exits, then delete is and create a new one.
-    public static void createTale(String myTableNaString, String[] colFamilyStrings) throws IOException {
+    // if it exits, then delete it and create a new one.
+    public static void createTable(String myTableNaString, String[] colFamilyStrings) throws IOException {
+        // operate the strings
+        // HashMap<String, List<String>> hashMap = new HashMap<>();
+        // for(String field : colFamilyStrings){
+        //     String[] res = field.split(":");
+        //     if(hashMap.get(res[0]) == null){
+        //         hashMap.put(res[0], new ArrayList<String>());
+        //     }else{
+        //         hashMap.get(res[0]).add(res[1]);
+        //     }
+        // }
+
         init();
         TableName tableName = TableName.valueOf(myTableNaString);
         if (admin.tableExists(tableName)) {
@@ -66,7 +86,8 @@ public class TestHBase {
 
         TableDescriptorBuilder tableDescriptorBuilder = TableDescriptorBuilder.newBuilder(tableName);
 
-        // set columns for descriptor
+        // set colFamilies for descriptor
+        // Set<String> keySet = hashMap.keySet();
         for (String str : colFamilyStrings) {
             ColumnFamilyDescriptor columnFamilyDescriptor = ColumnFamilyDescriptorBuilder.of(str);
             tableDescriptorBuilder.setColumnFamily(columnFamilyDescriptor);
@@ -100,10 +121,15 @@ public class TestHBase {
         Put put = new Put(Bytes.toBytes(row));
 
         for (int i = 0; i < fields.length; i++) {
-            put.addColumn(Bytes.toBytes(row), Bytes.toBytes(fields[i]), i < values.length ? Bytes.toBytes(values[i]) : Bytes.toBytes(""));
+            put = new Put(row.getBytes());
+            String[] columns = fields[i].split(":");
+            if(columns.length == 1){
+                put.addColumn(columns[0].getBytes(), "".getBytes(), values[i].getBytes());
+            }else{
+                put.addColumn(columns[0].getBytes(), columns[1].getBytes(), values[i].getBytes());
+            }
+            table.put(put);
         }
-
-        table.put(put);
         table.close();
         close();
     }
@@ -129,31 +155,42 @@ public class TestHBase {
         init();
         Table table = connection.getTable(TableName.valueOf(tableName));
         Scan scan = new Scan();
+
         ResultScanner resultScanner = table.getScanner(scan);
         String[] splitResult = columnFamily.split(":");
+
         if(splitResult.length == 1){
-            // scan.addFamily(Bytes.toBytes(columnFamily));
-        }
-        else{
+            scan.addFamily(columnFamily.getBytes());
+        }else{
             scan.addColumn(Bytes.toBytes(splitResult[0]), Bytes.toBytes(splitResult[1]));
-            resultScanner = table.getScanner(scan);
-            for(Result r : resultScanner){
-                System.out.println("\n row: "+new String(r.getRow()));
+        }
+        resultScanner = table.getScanner(scan);
+        for(Result r : resultScanner){
+            Cell[] cells = r.rawCells();
+            if(cells.length == 0) {
+                System.out.println("null");
+            }
+            for(Cell cell : cells){
+                System.out.println(new String(CellUtil.cloneRow(cell)) + new String(CellUtil.cloneValue(cell)) + new String(CellUtil.cloneQualifier(cell)) + new String(CellUtil.cloneFamily(cell)));
             }
         }
         resultScanner.close();
         close();
     }
 
-    public static void scanTest() throws IOException{
+    // modify the data
+    public static void modifyData(String tableName, String row, String column, String value) throws IOException{
         init();
-        Table table = connection.getTable(TableName.valueOf("Students-Course-SC"));
-        Scan scan = new Scan();
-        ResultScanner resultScanner = table.getScanner(scan);
-        for(Result result : resultScanner){
-            System.out.println(new String(result.getRow()));
-        }
-        close();
+        Table table = connection.getTable(TableName.valueOf(tableName));
+        Put put = new Put(row.getBytes());
+        put.addColumn(column.split(":")[0].getBytes(), (column.split(":").length == 1 ? "".getBytes() : column.split(":")[1].getBytes()), value.getBytes());
+        table.put(put);
     }
 
-}
+    // delete the row
+    public static void deleteRow(String tableName, String row) throws IOException{
+        Table table = connection.getTable(TableName.valueOf(tableName));
+        Delete delete = new Delete(row.getBytes());
+        table.delete(delete);
+    }
+}   
