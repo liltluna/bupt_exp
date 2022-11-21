@@ -30,7 +30,8 @@ public class TestHBase {
     // establish connection
     public static void init() {
         configuration = HBaseConfiguration.create();
-        configuration.set("hbase.rootdir", "file:///tmp/hbase");
+        // configuration.set("hbase.zookeeper.property.clientPort","2181");
+        configuration.set("hbase.rootdir", "hdfs://localhost:9000/hbase");
         try {
             connection = ConnectionFactory.createConnection(configuration);
             admin = connection.getAdmin();
