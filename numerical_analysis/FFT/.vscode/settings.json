@@ -3,6 +3,10 @@
         "complex.h": "c",
         "complex": "c",
         "numeric": "c",
-        "cmath": "c"
+        "cmath": "c",
+        "math.h": "c",
+        "array": "c",
+        "string": "c",
+        "string_view": "c"
     }
 }
