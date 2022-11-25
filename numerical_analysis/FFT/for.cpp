@@ -129,7 +129,7 @@ void fft(Complex *dist, Complex *src, int N)
     int n = log(N) / log(2);
     rader_reverse(dist, N);
     for (int s = 1, m = 1; s <= n; s++)
-    { 
+    {
         // start the process of iteration
         m *= 2;
         Complex temp, u, omiga, omigaM = Complex(cos(-2 * M_PI / m), sin(-2 * M_PI / m));
@@ -180,23 +180,38 @@ void cmplx_print(Complex &complex)
     printf("%lf + %lfi\n", complex.getReal(), complex.getImage());
 }
 
-void int_print(Integer &integer){
-    for(int i = 0; i < integer.size(); i++){
+void int_print(Integer &integer)
+{
+    for (int i = 0; i < integer.size(); i++)
+    {
+        printf("%c", integer.at(i));
+    }
+    printf("\n");
+}
+
+void int_print_with_name(Integer &integer, const char* string){
+    printf("%s = ", string);
+    for (int i = 0; i < integer.size(); i++)
+    {
         printf("%c", integer.at(i));
     }
     printf("\n");
 }
 
 // this function to transform a vector<unsigned char> to something like vector<int>
-void transform_integer(Integer *integer){
-    for(int i = 0; i < integer->size(); i++){
+void transform_integer(Integer *integer)
+{
+    for (int i = 0; i < integer->size(); i++)
+    {
         integer->at(i) = integer->at(i) > '9' ? integer->at(i) - '7' : integer->at(i) - '0';
     }
 }
 
 // this function eliminate the conversion of last function
-void recover_integer(Integer *integer){
-    for(int i = 0; i < integer->size(); i++){
+void recover_integer(Integer *integer)
+{
+    for (int i = 0; i < integer->size(); i++)
+    {
         integer->at(i) = integer->at(i) > 9 ? integer->at(i) + '7' : integer->at(i) + '0';
     }
 }
@@ -239,8 +254,9 @@ void hand_computation(Integer *res, Integer *multiplier_l, Integer *multiplier_r
     }
 }
 
-void hand_computation_2(Integer *res, Integer *multiplier_l, Integer *multiplier_r){
-    int b = 16;
+void hand_computation_2(Integer *res, Integer *multiplier_l, Integer *multiplier_r, int base_)
+{
+    int base = base_;
 
     int left_length = multiplier_l->size();
     int right_length = multiplier_r->size();
@@ -248,29 +264,33 @@ void hand_computation_2(Integer *res, Integer *multiplier_l, Integer *multiplier
     // transform the vactors
     transform_integer(res);
     transform_integer(multiplier_l);
-    if(multiplier_l != multiplier_r)
+    if (multiplier_l != multiplier_r)
         transform_integer(multiplier_r);
 
     // simulate hand computation
-    for(int i = 0; i < left_length; i++){
+    for (int i = 0; i < left_length; i++)
+    {
         int carry = 0;
-        for(int j = 0; j < right_length; j++){
+        for (int j = 0; j < right_length; j++)
+        {
             int temp = res->at(i + j) + ((multiplier_l->at(i)) * (multiplier_r->at(j))) + carry;
-            res->at(i + j) = temp % b;
-            carry = temp / b;
+            res->at(i + j) = temp % base;
+            carry = temp / base;
         }
         res->at(i + right_length) = carry;
     }
 
     recover_integer(res);
     recover_integer(multiplier_l);
-    if(multiplier_l != multiplier_r)
+    if (multiplier_l != multiplier_r)
         recover_integer(multiplier_r);
-    
+
     // delete the '0's
     int index = res->size() - 1;
-    for( ; ;index--){
-        if(res->at(index) != '0'){
+    for (;; index--)
+    {
+        if (res->at(index) != '0')
+        {
             break;
         }
         res->pop_back();
@@ -280,9 +300,9 @@ void hand_computation_2(Integer *res, Integer *multiplier_l, Integer *multiplier
 }
 
 // realize the long integer multiplication
-void long_integer_with_fft(Integer* res, Integer *integer_left, Integer *integer_right)
+void long_integer_with_fft(Integer *res, Integer *integer_left, Integer *integer_right, int base_)
 {
-    int base = 16;
+    int base = base_;
     int left_length, right_length, sum_length;
 
     left_length = integer_left->size();
@@ -291,42 +311,48 @@ void long_integer_with_fft(Integer* res, Integer *integer_left, Integer *integer
 
     int N = pow(2, (int)(log(sum_length) / log(2)) + 1);
 
-    Complex* left_extend_complex = new Complex[N];
-    Complex* right_extend_complex = new Complex[N];
-    Complex* result_complex = new Complex[N];
+    Complex *left_extend_complex = new Complex[N];
+    Complex *right_extend_complex = new Complex[N];
+    Complex *result_complex = new Complex[N];
 
     transform_integer(res);
     transform_integer(integer_right);
-    if(integer_right != integer_left)
+    if (integer_right != integer_left)
         transform_integer(integer_left);
 
-    for (int i = 0; i < left_length ;i++) {
-        left_extend_complex[i] = Complex((double)(integer_left->at(left_length - i -1)));
+    for (int i = 0; i < left_length; i++)
+    {
+        left_extend_complex[i] = Complex((double)(integer_left->at(left_length - i - 1)));
     }
 
-    for (int i = 0; i < right_length ;i++) {
-        right_extend_complex[i] = Complex((double)(integer_right->at(right_length - i -1)));
+    for (int i = 0; i < right_length; i++)
+    {
+        right_extend_complex[i] = Complex((double)(integer_right->at(right_length - i - 1)));
     }
 
     fft(left_extend_complex, left_extend_complex, N);
     fft(right_extend_complex, right_extend_complex, N);
 
-    for(int i = 0; i < N; i++) {
+    for (int i = 0; i < N; i++)
+    {
         result_complex[i] = left_extend_complex[i] * right_extend_complex[i];
     }
 
     ifft(result_complex, result_complex, N);
 
     int current_number = 0, round_up = 0;
-    for(int i = 0; i < sum_length; i++) {
+    for (int i = 0; i < sum_length; i++)
+    {
         current_number = (int)result_complex[i].getReal() + round_up;
         res->at(i) = current_number % base;
         round_up = current_number / base;
     }
 
     int index = res->size() - 1;
-    for( ; ;index--){
-        if(res->at(index) != 0){
+    for (;; index--)
+    {
+        if (res->at(index) != 0)
+        {
             break;
         }
         res->pop_back();
@@ -335,10 +361,89 @@ void long_integer_with_fft(Integer* res, Integer *integer_left, Integer *integer
     // recover the integer
     recover_integer(res);
     recover_integer(integer_left);
-    if(integer_right != integer_left)
-        recover_integer(integer_left);
+    if (integer_right != integer_left)
+        recover_integer(integer_right);
 
     std::reverse(res->begin(), res->end());
+}
+
+// forth problem
+void multiply(Integer *rst, Integer const &a, Integer const &b)
+{
+    Integer tem_a = a;
+    Integer tem_b = b;
+    rst->resize(100, '0');
+
+    int base = 10;
+
+    for(int i = 0; i < tem_a.size(); i++){
+        if(tem_a.at(i) > '9')
+        {
+            base = 16;
+            break;
+        }
+    }
+
+    printf("Performing fft long integer multiplication\n");
+    long_integer_with_fft(rst, &tem_a, &tem_b, base);
+    int_print_with_name(tem_a, "a");
+    int_print_with_name(tem_b, "b");
+    int_print_with_name(*rst, "result");
+}
+
+// fifth problem
+void multiply_check(Integer *rst, Integer const &a, Integer const &b)
+{
+    Integer tem_a = a;
+    Integer tem_b = b;
+    rst->resize(100, '0');
+
+    int base = 10;
+
+    for(int i = 0; i < tem_a.size(); i++){
+        if(tem_a.at(i) > '9')
+        {    
+            base = 16;
+            break;
+        }
+    }
+    printf("Performing hand way integer multiplication\n");
+    hand_computation_2(rst, &tem_a, &tem_b, base);
+    int_print_with_name(tem_a, "a");
+    int_print_with_name(tem_b, "b");
+    int_print_with_name(*rst, "result");
+}
+
+// sixth problem
+void long_integer_cal_check(){
+    Integer a, b, c, d;
+    Integer res_1, res_2, res_3, res_4;
+    int base;
+
+    for (int i = 1; i < 16; i++)
+    {
+        if(i < 10)
+            b.push_back(10 - i);
+        a.push_back(i);
+    }
+
+    c = a;
+    d = b;
+
+    std::reverse(c.begin(), c.end());
+    std::reverse(d.begin(), d.end());
+
+    recover_integer(&a);
+    recover_integer(&b);
+    recover_integer(&c);
+    recover_integer(&d);
+
+    multiply(&res_1, a, c);
+    multiply_check(&res_2, a, c);
+
+
+    multiply(&res_3, b, d);
+    multiply_check(&res_4, b, d);
 }
 
 void test_fft_ifft()
@@ -369,31 +474,35 @@ void test_fft_ifft()
     return;
 }
 
-void test_hand_computation(){
-    Integer i_l, res;
-
-    i_l.resize(6, 'A');
-    res.resize(100, '0');
-
-    hand_computation_2(&res, &i_l, &i_l);
-    int_print(i_l);
-    int_print(res);
-}
-
-void test_long_integer_fft(){
-    Integer i_l, res;
-
-    i_l.resize(6, 'A');
-    res.resize(100, '0');
-
-    long_integer_with_fft(&res, &i_l, &i_l);
-    int_print(i_l);
-    int_print(res);
-}
-
-int main () 
+void test_hand_computation()
 {
-    test_long_integer_fft();
-    test_hand_computation();
-    return 0;
+    Integer i_l, res;
+
+    i_l.resize(6, 'A');
+    res.resize(100, '0');
+
+    hand_computation_2(&res, &i_l, &i_l, 16);
+    int_print(i_l);
+    int_print(res);
+}
+
+void test_long_integer_fft()
+{
+    Integer i_l, res;
+
+    i_l.resize(6, 'A');
+    res.resize(100, '0');
+
+    long_integer_with_fft(&res, &i_l, &i_l, 16);
+    int_print(i_l);
+    int_print(res);
+}
+
+int main()
+{
+    Integer a, b, res, res_;
+    a.push_back('A');
+    b.push_back('A');
+    multiply(&res, a, b);
+    multiply_check(&res_, a, b);
 }
