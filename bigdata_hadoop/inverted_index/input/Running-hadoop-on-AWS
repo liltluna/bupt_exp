@@ -1,0 +1,19 @@
+
+Running Hadoop on AWS
+
+Amazon EMR is a managed service that lets you process and analyze large datasets using the latest versions of big data processing frameworks such as Apache Hadoop, Spark, HBase, and Presto on fully customizable clusters.
+
+    Easy to use: You can launch an Amazon EMR cluster in minutes. You don’t need to worry about node provisioning, cluster setup, Hadoop configuration, or cluster tuning.
+
+    Low cost: Amazon EMR pricing is simple and predictable: You pay an hourly rate for every instance hour you use and you can leverage Spot Instances for greater savings.
+
+    Elastic: With Amazon EMR, you can provision one, hundreds, or thousands of compute instances to process data at any scale.
+
+    Transient: You can use EMRFS to run clusters on-demand based on HDFS data stored persistently in Amazon S3. As jobs finish, you can shut down a cluster and have the data saved in Amazon S3. You pay only for the compute time that the cluster is running.
+
+    Secure: Amazon EMR uses all common security characteristics of AWS services:
+        Identity and Access Management (IAM) roles and policies to manage permissions.
+        Encryption in-transit and at-rest to help you protect your data and meet compliance standards, such as HIPAA.
+        Security groups to control inbound and outbound network traffic to your cluster nodes.
+        AWS CloudTrail: Audit all Amazon EMR PI calls made in your account to provide security analysis, resource change tracking, and compliance auditing.
+
