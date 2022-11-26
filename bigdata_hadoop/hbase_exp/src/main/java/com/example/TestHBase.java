@@ -1,5 +1,3 @@
-package com.example;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
@@ -14,7 +12,7 @@ public class TestHBase {
 
     public static void main(String[] args) throws IOException {
         String tableNameString = "StuInfo";
-        String[] colFamilyStrings = {"SI", "Ma", "CS", "Eng"};
+        String[] colFamilyStrings = {"SID", "SI", "Ma", "CS", "Eng"};
     
         String[] infoFields = {"SI:name", "SI:sex", "SI:age", "Ma:id", "Ma:credit", "Ma:score", "CS:id", "CS:credit", "CS:score", "Eng:id", "Eng:credit", "Eng:score"};
 
@@ -22,18 +20,32 @@ public class TestHBase {
         String[] info_2 = {"Mary", "female", "22", "123001", "2", "", "123002", "5", "77", "123003", "3", "99"};
         String[] info_3 = {"Lisi", "male", "24", "123001", "2", "98", "123002", "5", "95", "123003", "3", ""};
 
+        System.out.println("Start the progress of creating a table named 'StuInfo'.\n");
         createTable(tableNameString, colFamilyStrings);
+
+        System.out.println("Add record of stu-2015001");
         addRecord(tableNameString, "2015001", infoFields, info_1);
+
+        System.out.println("Add record of stu-2015002");
         addRecord(tableNameString, "2015002", infoFields, info_2);
+        
+        System.out.println("Add record of stu-2015003");
         addRecord(tableNameString, "2015003", infoFields, info_3);
         
-        scanColumn(tableNameString, "Student");
+        System.out.println("\nScanning the data of colfamily 'SI'... \n");
+        scanColumn(tableNameString, "SI");
+
+        System.out.println("\nScanning the data of col 'Ma:score'... \n");
         scanColumn(tableNameString, "Ma:score");
 
+        System.out.println("\nModifying data of the score of English(2015002)\n");
         modifyData(tableNameString, "2015002", "Eng:score", "100");
+        System.out.println("\nCheck...");
         scanColumn(tableNameString, "Eng:score");
 
+        System.out.println("\nDeleting the data of 2015003");
         deleteRow(tableNameString, "2015003");
+        System.out.println("\nCheck...");
         scanColumn(tableNameString, "SI");
     }
 
@@ -81,23 +93,24 @@ public class TestHBase {
         TableName tableName = TableName.valueOf(myTableNaString);
         if (admin.tableExists(tableName)) {
             System.out.println("The table exists and will be deleted!");
+            admin.disableTable(tableName);
             admin.deleteTable(tableName);
         }
 
-        TableDescriptorBuilder tableDescriptorBuilder = TableDescriptorBuilder.newBuilder(tableName);
+        HTableDescriptor hTableDescriptor = new HTableDescriptor(tableName);
 
         // set colFamilies for descriptor
         // Set<String> keySet = hashMap.keySet();
         for (String str : colFamilyStrings) {
-            ColumnFamilyDescriptor columnFamilyDescriptor = ColumnFamilyDescriptorBuilder.of(str);
-            tableDescriptorBuilder.setColumnFamily(columnFamilyDescriptor);
+            HColumnDescriptor hColumnDescriptor = new HColumnDescriptor(str);
+            hTableDescriptor.addFamily(hColumnDescriptor);
         }
 
         // build table descriptor
-        TableDescriptor tableDescriptor = tableDescriptorBuilder.build();
+        //TableDescriptor tableDescriptor = hTableDescriptor.build();
 
         // create table
-        admin.createTable(tableDescriptor);
+        admin.createTable(hTableDescriptor);
 
         close();
     }
@@ -171,7 +184,8 @@ public class TestHBase {
                 System.out.println("null");
             }
             for(Cell cell : cells){
-                System.out.println(new String(CellUtil.cloneRow(cell)) + new String(CellUtil.cloneValue(cell)) + new String(CellUtil.cloneQualifier(cell)) + new String(CellUtil.cloneFamily(cell)));
+                
+                System.out.println(new String(CellUtil.cloneRow(cell)) + "\t" + (CellUtil.cloneValue(cell).length == 0 ? "null" : new String(CellUtil.cloneValue(cell))) + "\t" + new String(CellUtil.cloneQualifier(cell))+ "\t" + new String(CellUtil.cloneFamily(cell)));
             }
         }
         resultScanner.close();
@@ -185,12 +199,15 @@ public class TestHBase {
         Put put = new Put(row.getBytes());
         put.addColumn(column.split(":")[0].getBytes(), (column.split(":").length == 1 ? "".getBytes() : column.split(":")[1].getBytes()), value.getBytes());
         table.put(put);
+        close();
     }
 
     // delete the row
     public static void deleteRow(String tableName, String row) throws IOException{
+        init();
         Table table = connection.getTable(TableName.valueOf(tableName));
         Delete delete = new Delete(row.getBytes());
         table.delete(delete);
+        close();
     }
 }   
