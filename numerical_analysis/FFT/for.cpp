@@ -3,15 +3,21 @@
 #include <sstream>
 #include <vector>
 #include <stdio.h>
+#include <ctime>
 #include <algorithm>
 
 // define this to use M_PI and other parameters
 #define _USE_MATH_DEFINES
 #include <math.h>
 
+#define MAX_RES_LENGTH 2048
+
 // to use the "typedef std::vector<unsigned char> Integer"
 // we create a new class Complex instead of using the default one
 typedef std::vector<unsigned char> Integer;
+
+clock_t start, end;
+int counter = 0;
 
 class Complex
 {
@@ -26,7 +32,7 @@ public:
     Complex operator+(Complex const &a) const;
     Complex operator-(Complex const &a) const;
     Complex operator*(Complex const &a) const;
-    Complex operator/(int n) const;
+    Complex operator/(Complex const &a) const;
     Complex &operator=(const Complex &a);
     double getReal();
     double getImage();
@@ -74,9 +80,12 @@ Complex Complex::operator*(Complex const &a) const
     return result;
 }
 
-Complex Complex::operator/(int n) const
+Complex Complex::operator/(Complex const &a) const
 {
-    Complex result(real_ / n, imag_ / n);
+    double areal = real_ * a.real_ + imag_ * a.imag_;
+    double breal = imag_ * a.real_ - real_ * a.imag_;
+    double n = a.real_ * a.real_ + a.imag_ * a.imag_;
+    Complex result(areal / n, breal / n);
     return result;
 }
 
@@ -267,6 +276,14 @@ void hand_computation_2(Integer *res, Integer *multiplier_l, Integer *multiplier
     if (multiplier_l != multiplier_r)
         transform_integer(multiplier_r);
 
+    std::reverse(multiplier_l->begin(), multiplier_l->end());
+    std::reverse(multiplier_r->begin(), multiplier_r->end());
+
+    // start timer 
+    // --------------------------------------------------
+    // start = clock();
+    // --------------------------------------------------
+
     // simulate hand computation
     for (int i = 0; i < left_length; i++)
     {
@@ -279,6 +296,12 @@ void hand_computation_2(Integer *res, Integer *multiplier_l, Integer *multiplier
         }
         res->at(i + right_length) = carry;
     }
+
+    // end timer 
+    // --------------------------------------------------
+    // end = clock();
+    // printf("had,%d,%lf\n", counter, (double)(end-start)/CLOCKS_PER_SEC);
+    // --------------------------------------------------
 
     recover_integer(res);
     recover_integer(multiplier_l);
@@ -297,6 +320,8 @@ void hand_computation_2(Integer *res, Integer *multiplier_l, Integer *multiplier
     }
 
     std::reverse(res->begin(), res->end());
+    std::reverse(multiplier_l->begin(), multiplier_l->end());
+    std::reverse(multiplier_r->begin(), multiplier_r->end());
 }
 
 // realize the long integer multiplication
@@ -329,6 +354,10 @@ void long_integer_with_fft(Integer *res, Integer *integer_left, Integer *integer
     {
         right_extend_complex[i] = Complex((double)(integer_right->at(right_length - i - 1)));
     }
+    // start timer 
+    // --------------------------------------------------
+    // start = clock();
+    // --------------------------------------------------
 
     fft(left_extend_complex, left_extend_complex, N);
     fft(right_extend_complex, right_extend_complex, N);
@@ -358,6 +387,13 @@ void long_integer_with_fft(Integer *res, Integer *integer_left, Integer *integer
         res->pop_back();
     }
 
+    // end timer 
+    // --------------------------------------------------
+    // end = clock();
+    // printf("fft,%d,%lf\n", counter, (double)(end-start)/CLOCKS_PER_SEC);
+    // --------------------------------------------------
+
+
     // recover the integer
     recover_integer(res);
     recover_integer(integer_left);
@@ -372,7 +408,7 @@ void multiply(Integer *rst, Integer const &a, Integer const &b)
 {
     Integer tem_a = a;
     Integer tem_b = b;
-    rst->resize(100, '0');
+    rst->resize(MAX_RES_LENGTH, '0');
 
     int base = 10;
 
@@ -384,11 +420,11 @@ void multiply(Integer *rst, Integer const &a, Integer const &b)
         }
     }
 
-    printf("Performing fft long integer multiplication\n");
+    // printf("Performing fft long integer multiplication\n");
     long_integer_with_fft(rst, &tem_a, &tem_b, base);
-    int_print_with_name(tem_a, "a");
-    int_print_with_name(tem_b, "b");
-    int_print_with_name(*rst, "result");
+    // int_print_with_name(tem_a, "a");
+    // int_print_with_name(tem_b, "b");
+    // int_print_with_name(*rst, "result");
 }
 
 // fifth problem
@@ -396,7 +432,7 @@ void multiply_check(Integer *rst, Integer const &a, Integer const &b)
 {
     Integer tem_a = a;
     Integer tem_b = b;
-    rst->resize(100, '0');
+    rst->resize(MAX_RES_LENGTH, '0');
 
     int base = 10;
 
@@ -407,11 +443,11 @@ void multiply_check(Integer *rst, Integer const &a, Integer const &b)
             break;
         }
     }
-    printf("Performing hand way integer multiplication\n");
+    // printf("Performing hand way integer multiplication\n");
     hand_computation_2(rst, &tem_a, &tem_b, base);
-    int_print_with_name(tem_a, "a");
-    int_print_with_name(tem_b, "b");
-    int_print_with_name(*rst, "result");
+    // int_print_with_name(tem_a, "a");
+    // int_print_with_name(tem_b, "b");
+    // int_print_with_name(*rst, "result");
 }
 
 // sixth problem
@@ -438,12 +474,66 @@ void long_integer_cal_check(){
     recover_integer(&c);
     recover_integer(&d);
 
+    
+   for(int i = 0; i < 1000; i++){
+        a.push_back('0');
+        c.push_back('0');
+        if(i < 800){
+            b.push_back('0');
+            d.push_back('0');
+        }
+    }
+
     multiply(&res_1, a, c);
     multiply_check(&res_2, a, c);
 
 
     multiply(&res_3, b, d);
     multiply_check(&res_4, b, d);
+}
+
+// seventh problem 
+void time_comparing_test(){
+    Integer fir_integer, sec_integer;
+    fir_integer.resize(1, 'A');
+    sec_integer.resize(1, 'B');
+
+    for(int i = 0; i < 200; i++){
+        Integer res;
+        multiply(&res, fir_integer, sec_integer);
+        Integer res_h;
+        multiply_check(&res_h, fir_integer, sec_integer);
+        fir_integer.push_back('A');
+        sec_integer.push_back('B');
+        ++counter;
+    }
+}
+
+// eigth problem 
+void accurency_test(){
+    Integer fir_integer, sec_integer;
+    fir_integer.resize(1, '1');
+    sec_integer.resize(1, '1');
+
+    for(int i = 0; i < 100; i++){
+        Integer res;
+        multiply(&res, fir_integer, sec_integer);
+        Integer res_h;
+        multiply_check(&res_h, fir_integer, sec_integer);
+        if(res.size() != res_h.size()){
+            printf("%d\n", counter);
+            return;
+        }
+        for(int i = 0; i < res.size(); i++){
+            if(res.at(i) != res_h.at(i)){
+                printf("%d\n", counter);
+                return;
+            }
+        }
+        fir_integer.push_back('1');
+        sec_integer.push_back('1');
+        ++counter;
+    }
 }
 
 void test_fft_ifft()
@@ -478,8 +568,8 @@ void test_hand_computation()
 {
     Integer i_l, res;
 
-    i_l.resize(6, 'A');
-    res.resize(100, '0');
+    i_l.resize(100, 'A');
+    res.resize(300, '0');
 
     hand_computation_2(&res, &i_l, &i_l, 16);
     int_print(i_l);
@@ -490,19 +580,53 @@ void test_long_integer_fft()
 {
     Integer i_l, res;
 
-    i_l.resize(6, 'A');
-    res.resize(100, '0');
+    i_l.resize(100, 'A');
+    res.resize(300, '0');
 
     long_integer_with_fft(&res, &i_l, &i_l, 16);
     int_print(i_l);
     int_print(res);
 }
 
+void test_class_complex(){
+    printf("Creating some complex using constructors...\n");
+    Complex *a = new Complex(2.0, 4.0);
+    Complex *b = new Complex(1.0, 3.0);
+    Complex *c = new Complex();
+
+    printf("result:a, b, c\n");
+    cmplx_print(*a);
+    cmplx_print(*b);
+    cmplx_print(*c);
+
+    printf("c = a + b\n");
+    (*c) = (*a) + (*b);
+    cmplx_print(*c);
+
+    printf("c = a - b\n");
+    (*c) = (*a) - (*b);
+    cmplx_print(*c);
+
+    printf("c = a * b\n");
+    (*c) = (*a) * (*b);
+    cmplx_print(*c);
+
+    printf("c = a / b\n");
+    (*c) = (*a) / (*b);
+    cmplx_print(*c);
+
+}
+
 int main()
 {
-    Integer a, b, res, res_;
-    a.push_back('A');
-    b.push_back('A');
-    multiply(&res, a, b);
-    multiply_check(&res_, a, b);
+    // Integer a, b, res, res_;
+    // a.push_back('A');
+    // b.push_back('A');
+    // multiply(&res, a, b);
+    // multiply_check(&res_, a, b);
+    // test_class_complex();
+    // long_integer_cal_check();
+    // test_hand_computation();
+    // time_comparing_test();
+    accurency_test();
 }
