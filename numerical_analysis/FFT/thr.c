@@ -2,11 +2,12 @@
 #include <stdio.h>
 #include <math.h>
 
-#define LENGTH 1 << 1
+#define LENGTH 1 << 2
 
 void rader_reverse(complex *cmplx_arr, int n);
 void fft(complex *x, int n);
 void cmplx_print(complex *x);
+void rader_test();
 complex euler_formula(double x);
 
 int main()
@@ -15,15 +16,10 @@ int main()
     complex x[LENGTH], X[LENGTH];
 
     // produce the test sample
-    // for (int i = 0; i < LENGTH; ++i)
-    // {
-    //     x[i] = CMPLX((double)i, 0.0);
-    //     // copy to X, making preparation for FFT
-    //     X[i] = x[i];
-    // }
-
-    X[0] = CMPLX(9.0, 0);
-    X[1] = CMPLX(1.0, 0);
+    X[0] = CMPLX(1.0, 0);
+    X[1] = CMPLX(2.0, 0);
+    X[2] = CMPLX(3.0, 0);
+    X[3] = CMPLX(2.0, 0);
 
     fft(X, LENGTH);
 
