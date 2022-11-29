@@ -2,9 +2,9 @@
 
 public class Path{
     private int distance;
-    private int nextHop;
+    private String nextHop;
     
-    public Path(int distance, int nextHop) {
+    public Path(int distance, String nextHop) {
         this.distance = distance;
         this.nextHop = nextHop;
     }
@@ -13,7 +13,7 @@ public class Path{
         this.distance = distance;
     }
 
-    public void setNextHop(int nextHop) {
+    public void setNextHop(String nextHop) {
         this.nextHop = nextHop;
     }
 
@@ -21,7 +21,7 @@ public class Path{
         return distance;
     }
 
-    public int getNextHop() {
+    public String getNextHop() {
         return nextHop;
     }
 

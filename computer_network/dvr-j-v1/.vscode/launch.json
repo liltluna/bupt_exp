@@ -6,6 +6,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "Launch Master",
+            "request": "launch",
+            "mainClass": "Master",
+            "projectName": "dvr-j-v1_feade620"
+        },
+        {
+            "type": "java",
             "name": "Launch Current File",
             "request": "launch",
             "mainClass": "${file}"

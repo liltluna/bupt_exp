@@ -4,11 +4,10 @@ public class Router {
     int r_ID;
     int r_port;
     String r_filename;
-    HashMap<String, Integer> r_neighbors;
-    HashMap<String, Integer> r_routes;
+    HashMap<String, Neighbor> r_neighbors;
+    HashMap<String, Path> r_routes;
     
-    public Router(int r_ID, int r_port, String r_filename, HashMap<String, Integer> r_neighbors,
-            HashMap<String, Integer> r_routes) {
+    public Router(int r_ID, int r_port, String r_filename, HashMap<String, Neighbor> r_neighbors, HashMap<String, Path> r_routes) {
         this.r_ID = r_ID;
         this.r_port = r_port;
         this.r_filename = r_filename;
@@ -40,19 +39,19 @@ public class Router {
         this.r_filename = r_filename;
     }
 
-    public HashMap<String, Integer> getR_neighbors() {
+    public HashMap<String, Neighbor> getR_neighbors() {
         return r_neighbors;
     }
 
-    public void setR_neighbors(HashMap<String, Integer> r_neighbors) {
+    public void setR_neighbors(HashMap<String, Neighbor> r_neighbors) {
         this.r_neighbors = r_neighbors;
     }
 
-    public HashMap<String, Integer> getR_routes() {
+    public HashMap<String, Path> getR_routes() {
         return r_routes;
     }
 
-    public void setR_routes(HashMap<String, Integer> r_routes) {
+    public void setR_routes(HashMap<String, Path> r_routes) {
         this.r_routes = r_routes;
     }
 
@@ -98,7 +97,50 @@ public class Router {
             return false;
         return true;
     }
+
+    public void initRoutes(){
+        for(String name : r_neighbors.keySet()){
+            r_routes.put(name, new Path(r_neighbors.get(name).getLinkCost(), name));
+        }
+    }
+
+    public void printRoutes(){
+        System.out.println(r_filename);
+        System.out.println("destination  distance    nextHop");
+        for(String node : r_routes.keySet()){
+            System.out.printf("%-12s\t%-8d\t%-6s\n", node, r_routes.get(node).getDistance(), r_routes.get(node).getNextHop());
+        }
+        System.out.println();
+    }
     
-    
-    
+    public void receiveRoutesTable(HashMap<String, Path> routes, String nodeName){
+        HashMap<String, Path> hashtable = new HashMap<>(routes);
+        hashtable.remove(this.r_filename);
+        for(String keyString : hashtable.keySet()){
+            
+            // hashtable.get(keyString).setNextHop(nodeName);
+            Path oldTablePath = r_routes.get(keyString);
+            Path newTablePath = hashtable.get(keyString);
+
+            if(oldTablePath == null){
+                newTablePath.setNextHop(nodeName);
+                newTablePath.setDistance(newTablePath.getDistance() + r_routes.get(nodeName).getDistance());
+                r_routes.put(keyString, hashtable.get(keyString));
+            }
+            else {
+                if(oldTablePath.getNextHop() == nodeName){
+                    oldTablePath.setDistance(newTablePath.getDistance() + r_routes.get(nodeName).getDistance());
+                }
+                else{
+                    int newDistance = newTablePath.getDistance() + r_routes.get(nodeName).getDistance();
+                    int oldDistance = oldTablePath.getDistance();
+                    
+                    if(newDistance < oldDistance){
+                        oldTablePath.setDistance(newDistance);
+                        oldTablePath.setNextHop(nodeName);
+                    }
+                }
+            }
+        }
+    }
 }
