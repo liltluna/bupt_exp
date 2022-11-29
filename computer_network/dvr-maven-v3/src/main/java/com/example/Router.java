@@ -1,4 +1,11 @@
+package com.example;
+
+
 import java.util.HashMap;
+
+import javax.swing.plaf.basic.BasicScrollPaneUI.HSBChangeListener;
+
+import com.google.gson.Gson;
 
 public class Router {
     int r_ID;
@@ -114,18 +121,24 @@ public class Router {
     }
     
     public void receiveRoutesTable(HashMap<String, Path> routes, String nodeName){
-        HashMap<String, Path> hashtable = new HashMap<>(routes);
+        // HashMap<String, Path> hashtable = new HashMap<>(routes);
+        HashMap<String, Path> hashtable = new HashMap<>();
+        for(String key : routes.keySet()){
+            hashtable.put(key, new Path(routes.get(key).getDistance(), routes.get(key).getNextHop()));
+        }
+        
 
         // no need to test the distance to itself
         hashtable.remove(this.r_filename);
 
         // we need to calculate the new state of the comming table, 
         // if all the entries are replaced by the new table
-        for(String destNet : routes.keySet()){
-            routes.get(destNet).setNextHop(nodeName);
-            routes.get(destNet).setDistance(routes.get(destNet).getDistance() + this.r_routes.get(nodeName).getDistance());
+        for(String destNet : hashtable.keySet()){
+            hashtable.get(destNet).setNextHop(nodeName);
+            hashtable.get(destNet).setDistance(hashtable.get(destNet).getDistance() + this.r_routes.get(nodeName).getDistance());
         }
 
+        // System.out.println(gson.toJson(r_routes));
         // compare the entry one by one
         // 1. if old one doesn't has, new one has, add to the origin table
         // 2. old one has, new one has, nextHop diffenent, select a one with lower cost
@@ -145,7 +158,7 @@ public class Router {
             }
             else {
                 // 2
-                if(oldTablePath.getNextHop() == nodeName){
+                if(oldTablePath.getNextHop().equals(nodeName)){
                     oldTablePath.setDistance(newTablePath.getDistance());
                 }
                 // 3

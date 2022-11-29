@@ -1,7 +1,10 @@
+package com.example;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.HashMap;
+import com.google.gson.Gson;
 
 public class Master {
     HashMap<String, Integer> nodesMap;
@@ -10,6 +13,8 @@ public class Master {
     public static void main(String[] args) {
         Master master = new Master();
         master.readData();
+
+
         master.iterateExchange();
     }
 
@@ -60,16 +65,37 @@ public class Master {
     // DVR core code
     public void iterateExchange(){
 
-        for(int i = 0; i< 3; i++){
+        for(int i = 0; i< 4; i++){
             for(Router router : routerMap.values()){
                 for(String nameOfNeighbor : router.getR_neighbors().keySet()){
                     Router neighborRouter = routerMap.get(nameOfNeighbor);
                     router.receiveRoutesTable(neighborRouter.getR_routes(), nameOfNeighbor);
                 }
             }
-            this.routerMap.get("nodeA").printRoutes();
+
+            for(Router router : routerMap.values()){
+                router.printRoutes();
+            }
         }
+
+        
     }
 
+    public HashMap<String, Integer> getNodesMap() {
+        return nodesMap;
+    }
 
+    public void setNodesMap(HashMap<String, Integer> nodesMap) {
+        this.nodesMap = nodesMap;
+    }
+
+    public HashMap<String, Router> getRouterMap() {
+        return routerMap;
+    }
+
+    public void setRouterMap(HashMap<String, Router> routerMap) {
+        this.routerMap = routerMap;
+    }
+
+    
 }
