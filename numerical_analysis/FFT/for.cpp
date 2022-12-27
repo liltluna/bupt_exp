@@ -133,10 +133,44 @@ void rader_reverse(Complex *cmplx_arr, int length)
     }
 }
 
+void separate(Complex* a,int n) {
+	Complex* b = new Complex[n/2]; // get temp heap
+	for(int i=0; i<n/2; ++i) //copy所有奇下标元素
+		b[i] = a[i*2+1];
+	for(int i=0; i<n/2; ++i) //copy所有偶下标元素到数组lower-half
+		a[i] = a[i*2];  
+	for(int i=0; i<n/2; ++i) //copy所有偶下标元素(form heap)到数组upper-half
+		a[i+n/2] = b[i];  
+	delete[] b;				 //delete heap 
+}
+
+void fft2(Complex* X,int N) {
+	if(N < 2) {
+		//递归终止
+		//do nothing,因为X[0] = x[0]
+	} else {
+		separate(X,N); //将偶坐标元素移至lower half,奇坐标元素移至upper half
+		fft2(X,     N/2);  //递归偶坐标元素
+		fft2(X+N/2, N/2);  //递归奇坐标元素
+
+		//合并两个递归结果
+		for(int k=0; k<N/2; ++k) {
+			Complex e = X[k];     //偶
+			Complex o = X[k+N/2]; //奇
+			//w是蝶形系数
+			Complex w = Complex(cos((-2.0 * M_PI * k) / N), sin((-2.0 * M_PI * k) / N));
+			X[k    ]   = e + w * o;
+			X[k+N/2]   = e - w * o;
+		}
+	}
+
+}
+
 void fft(Complex *dist, Complex *src, int N)
 {
     int n = log(N) / log(2);
     rader_reverse(dist, N);
+
     for (int s = 1, m = 1; s <= n; s++)
     {
         // start the process of iteration
@@ -155,6 +189,7 @@ void fft(Complex *dist, Complex *src, int N)
             }
         }
     }
+
 }
 
 void ifft(Complex *dist, Complex *src, int N)
@@ -359,8 +394,8 @@ void long_integer_with_fft(Integer *res, Integer *integer_left, Integer *integer
     // start = clock();
     // --------------------------------------------------
 
-    fft(left_extend_complex, left_extend_complex, N);
-    fft(right_extend_complex, right_extend_complex, N);
+    fft2(left_extend_complex, N);
+    fft2(right_extend_complex, N);
 
     for (int i = 0; i < N; i++)
     {
@@ -627,6 +662,7 @@ int main()
     // test_class_complex();
     // long_integer_cal_check();
     // test_hand_computation();
+    // test_long_integer_fft();
     // time_comparing_test();
-    accurency_test();
+    // accurency_test();
 }
