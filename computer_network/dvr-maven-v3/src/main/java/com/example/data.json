@@ -1,0 +1,32 @@
+{
+    "nodeB": {
+        "distance": 25,
+        "nextHop": "nodeD"
+    },
+    "nodeC": {
+        "distance": 13,
+        "nextHop": "nodeD"
+    },
+    "nodeF": {
+        "distance": 19,
+        "nextHop": "nodeD"
+    }
+}
+{
+    "nodeE": {
+        "distance": 6,
+        "nextHop": "nodeE"
+    },
+    "nodeB": {
+        "distance": 25,
+        "nextHop": "nodeD"
+    },
+    "nodeC": {
+        "distance": 13,
+        "nextHop": "nodeD"
+    },
+    "nodeF": {
+        "distance": 19,
+        "nextHop": "nodeD"
+    }
+}
