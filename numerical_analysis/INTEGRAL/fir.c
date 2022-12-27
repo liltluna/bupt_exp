@@ -6,7 +6,7 @@
 
 #define SEGMENT_NUMBER 16
 #define ROMBERG_LINE_NUMBER 12
-
+struct timespec time_start = { 0, 0 }, time_end = { 0, 0 };
 clock_t start,end;
 
 double gauss_ch1(double (*f)(double), int n);
@@ -22,48 +22,74 @@ double f_1(double x){
 }
 
 double f_2(double x){
-    return 0.0;
+    return sin(M_PI * (x + 1) / 4);
 }
 
 int main()
 {
     double result = 0.0;
-
+    printf("--------------1--------------\n");
     printf("1---gauss_ch1:\nresult: ");
-    start = clock();
+    clock_gettime(CLOCK_REALTIME, &time_start);
     result = gauss_ch1(f_1, SEGMENT_NUMBER);
-    end = clock();
-    printf("%f\ntime: %f\n\n",result, (double)(end-start) / CLK_TCK);
+    clock_gettime(CLOCK_REALTIME, &time_end);
+    printf("%f\ntime: %d\n\n",result, (int)(time_end.tv_nsec - time_start.tv_nsec));
 
     printf("2---gauss_ch2:\nresult: ");
-    start = clock();
+    clock_gettime(CLOCK_REALTIME, &time_start);
     result = gauss_ch2(f_1, SEGMENT_NUMBER);
-    end = clock();
-    printf("%f\ntime: %f\n\n",result, (double)(end-start) / CLK_TCK);
+    clock_gettime(CLOCK_REALTIME, &time_end);
+    printf("%f\ntime: %d\n\n",result, (int)(time_end.tv_nsec - time_start.tv_nsec));
 
     printf("3---gauss_leg_9:\nresult: ");
-    start = clock();
+    clock_gettime(CLOCK_REALTIME, &time_start);
     result = gauss_leg_9(f_1);
-    end = clock();
-    printf("%f\ntime: %f\n\n",result, (double)(end-start) / CLK_TCK);
+    clock_gettime(CLOCK_REALTIME, &time_end);
+    printf("%f\ntime: %d\n\n",result, (int)(time_end.tv_nsec - time_start.tv_nsec));
 
     printf("4---comp_gauss_leg:\nresult: ");
-    start = clock();
+    clock_gettime(CLOCK_REALTIME, &time_start);
     result = comp_gauss_leg(f_1, -1, 1);
-    end = clock();
-    printf("%f\ntime: %f\n\n",result, (double)(end-start) / CLK_TCK);
+    clock_gettime(CLOCK_REALTIME, &time_end);
+    printf("%f\ntime: %d\n\n",result, (int)(time_end.tv_nsec - time_start.tv_nsec));
 
     printf("5---comp_trep:\nresult: ");
-    start = clock();
+    clock_gettime(CLOCK_REALTIME, &time_start);
     result = comp_trep(f_1, -1, 1);
-    end = clock();
-    printf("%f\ntime: %f\n\n",result, (double)(end-start) / CLK_TCK);
+    clock_gettime(CLOCK_REALTIME, &time_end);
+    printf("%f\ntime: %d\n\n",result, (int)(time_end.tv_nsec - time_start.tv_nsec));
 
     printf("6---romberg:\nresult: ");
-    start = clock();
+    clock_gettime(CLOCK_REALTIME, &time_start);
     result = romberg(f_1, -1, 1);
-    end = clock();
-    printf("%f\ntime: %f\n\n",result, (double)(end-start) / CLK_TCK);
+    clock_gettime(CLOCK_REALTIME, &time_end);
+    printf("%f\ntime: %d\n\n",result, (int)(time_end.tv_nsec - time_start.tv_nsec));
+
+    printf("--------------2--------------\n");
+
+    printf("3---gauss_leg_9:\nresult: ");
+    clock_gettime(CLOCK_REALTIME, &time_start);
+    result = gauss_leg_9(f_2);
+    clock_gettime(CLOCK_REALTIME, &time_end);
+    printf("%f\ntime: %d\n\n",result, (int)(time_end.tv_nsec - time_start.tv_nsec));
+
+    printf("4---comp_gauss_leg:\nresult: ");
+    clock_gettime(CLOCK_REALTIME, &time_start);
+    result = comp_gauss_leg(f_2, -1, 1);
+    clock_gettime(CLOCK_REALTIME, &time_end);
+    printf("%f\ntime: %d\n\n",result, (int)(time_end.tv_nsec - time_start.tv_nsec));
+
+    printf("5---comp_trep:\nresult: ");
+    clock_gettime(CLOCK_REALTIME, &time_start);
+    result = comp_trep(f_2, -1, 1);
+    clock_gettime(CLOCK_REALTIME, &time_end);
+    printf("%f\ntime: %d\n\n",result, (int)(time_end.tv_nsec - time_start.tv_nsec));
+
+    printf("6---romberg:\nresult: ");
+    clock_gettime(CLOCK_REALTIME, &time_start);
+    result = romberg(f_2, -1, 1);
+    clock_gettime(CLOCK_REALTIME, &time_end);
+    printf("%f\ntime: %d\n\n",result, (int)(time_end.tv_nsec - time_start.tv_nsec));
 
     return 0;
 }
@@ -164,9 +190,9 @@ double romberg(double(*f)(double), double a, double b)
         double subtotal = 0;
         step_line_i = (b - a) / pow(2, i);
 
-        for(int j = 1; j < pow(2, j - 2) + 1; i++)
+        for(int j = 1; j < pow(2, i - 2) + 1; j++)
         {
-            subtotal += f(a + (2 * i - 1) * step_line_i);
+            subtotal += f(a + (2 * j - 1) * step_line_i);
         }
 
         romberg_table[i][1] = romberg_table[i - 1][1] / 2 + step_line_i * subtotal;
